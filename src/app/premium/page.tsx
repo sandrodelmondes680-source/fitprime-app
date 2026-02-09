@@ -9,13 +9,13 @@ export default function PremiumPage() {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
   const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = async () => {
-    setLoading(true);
-    // Aqui você integraria com sistema de pagamento (Stripe, Mercado Pago, etc)
-    setTimeout(() => {
-      alert(`Plano ${selectedPlan === 'monthly' ? 'Mensal' : 'Anual'} selecionado! Integração de pagamento será implementada.`);
-      setLoading(false);
-    }, 1500);
+  const handleSubscribe = (plan: 'monthly' | 'annual') => {
+    const paymentLinks = {
+      monthly: 'https://pay.kiwify.com.br/ZZ6yQv0',
+      annual: 'https://pay.kiwify.com.br/Igb3YqS'
+    };
+
+    window.open(paymentLinks[plan], '_blank');
   };
 
   return (
@@ -197,22 +197,24 @@ export default function PremiumPage() {
               </div>
             </div>
 
-            {/* Subscribe Button */}
-            <button
-              onClick={handleSubscribe}
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#0D0D0D] font-bold py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00FF00]/20 text-lg disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {loading ? (
-                "Processando..."
-              ) : (
-                <>
-                  Assinar Agora - {selectedPlan === 'monthly' ? 'R$ 24,90/mês' : 'R$ 179,00/ano'}
-                </>
-              )}
-            </button>
+            {/* Subscribe Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <button
+                onClick={() => handleSubscribe('monthly')}
+                className="bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#0D0D0D] font-bold py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00FF00]/20 text-lg"
+              >
+                Plano Mensal - R$ 24,90/mês
+              </button>
 
-            <p className="text-center text-white/60 text-sm mt-4">
+              <button
+                onClick={() => handleSubscribe('annual')}
+                className="bg-gradient-to-r from-[#00FF00] to-[#00CC00] text-[#0D0D0D] font-bold py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 shadow-lg shadow-[#00FF00]/20 text-lg"
+              >
+                Plano Anual - R$ 179,00/ano
+              </button>
+            </div>
+
+            <p className="text-center text-white/60 text-sm">
               Pagamento seguro • Cancele quando quiser • Garantia de 7 dias
             </p>
           </div>
