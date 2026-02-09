@@ -213,91 +213,272 @@ export default function WorkoutAnalysisPage() {
   };
 
   const generateWorkoutPlan = (answers: QuizAnswers, profile: UserProfile): WorkoutPlan => {
-    // Tipo de treino (casa ou academia)
-    let trainingType = "";
-    if (answers.timeAvailable === "30min") {
-      trainingType = "Treino em Casa - Rápido e eficiente";
-    } else if (answers.currentConditioning === "sedentario" || answers.currentConditioning === "leve") {
-      trainingType = "Treino em Casa ou Academia - Flexível";
-    } else {
-      trainingType = "Academia - Equipamentos completos";
-    }
+    // ========================================
+    // PERSONALIZAÇÃO AVANÇADA DO TREINO
+    // ========================================
 
-    // Frequência semanal
+    // 1. NOME DO TREINO - Baseado em objetivo, tempo e nível
+    const objectiveNames: Record<string, string> = {
+      perder_peso: "Emagrecimento Acelerado",
+      ganhar_massa: "Construção Muscular",
+      definicao: "Definição e Tonificação",
+      saude: "Saúde e Bem-Estar",
+    };
+
+    const timeLabel = answers.timeAvailable === "30min" ? "30 min" :
+                     answers.timeAvailable === "45-60min" ? "60 min" : "Intensivo";
+
+    const trainingType = `Projeto ${objectiveNames[answers.mainObjective] || "Transformação"} - ${timeLabel}`;
+
+    // 2. FREQUÊNCIA SEMANAL - Baseada em condicionamento E frequência atual
     let weeklyFrequency = "";
-    if (answers.currentConditioning === "sedentario") {
+    const conditioning = answers.currentConditioning;
+    const currentFreq = answers.currentFrequency;
+
+    // Lógica inteligente: não aumentar muito de uma vez
+    if (conditioning === "sedentario" || currentFreq === "0") {
       weeklyFrequency = "3x por semana (Segunda, Quarta, Sexta)";
-    } else if (answers.currentConditioning === "leve") {
+    } else if (conditioning === "leve" || currentFreq === "1-2") {
       weeklyFrequency = "4x por semana (Segunda, Terça, Quinta, Sexta)";
-    } else if (answers.currentConditioning === "moderado") {
+    } else if (conditioning === "moderado" || currentFreq === "3-4") {
       weeklyFrequency = "5x por semana (Segunda a Sexta)";
     } else {
       weeklyFrequency = "6x por semana (Segunda a Sábado)";
     }
 
-    // Divisão de treino
+    // 3. DIVISÃO DE TREINO - Baseada em tempo disponível, condicionamento E objetivo
     let trainingDivision = "";
-    if (answers.currentConditioning === "sedentario" || answers.currentConditioning === "leve") {
-      trainingDivision = "Full Body - Corpo inteiro em cada treino";
-    } else if (answers.currentConditioning === "moderado") {
-      trainingDivision = "Divisão A/B - Superiores e Inferiores alternados";
+
+    if (answers.timeAvailable === "30min") {
+      // Treinos curtos = Full Body sempre
+      trainingDivision = "Full Body - Corpo inteiro em cada sessão";
+    } else if (conditioning === "sedentario" || conditioning === "leve") {
+      // Iniciantes = Full Body ou Upper/Lower
+      if (answers.mainObjective === "perder_peso") {
+        trainingDivision = "Full Body com Cardio - Máxima queima calórica";
+      } else {
+        trainingDivision = "Full Body - Corpo inteiro 3x/semana";
+      }
+    } else if (conditioning === "moderado") {
+      // Intermediários = A/B ou ABC conforme objetivo
+      if (answers.mainObjective === "ganhar_massa") {
+        trainingDivision = "Divisão ABC - Push/Pull/Legs";
+      } else {
+        trainingDivision = "Divisão A/B - Superior/Inferior";
+      }
     } else {
-      trainingDivision = "Divisão ABC - Peito/Costas, Pernas, Ombros/Braços";
+      // Avançados = ABC ou especializada
+      if (answers.mainObjective === "ganhar_massa") {
+        trainingDivision = "Divisão ABC Avançada - Foco hipertrofia";
+      } else if (answers.mainObjective === "definicao") {
+        trainingDivision = "Divisão ABC - Volume alto, descanso curto";
+      } else {
+        trainingDivision = "Divisão ABCD - Alta frequência";
+      }
     }
 
-    // Exercícios personalizados
+    // 4. EXERCÍCIOS ALTAMENTE PERSONALIZADOS
     let exercises: Array<{ name: string; sets: string; reps: string; rest: string }> = [];
 
+    // Determinar nível de intensidade baseado em condicionamento e idade
+    const age = answers.age;
+    const isYoung = age === "18-25" || age === "26-35";
+    const needsCare = answers.physicalLimitations !== "nenhuma" || age === "46+";
+    const isAdvanced = conditioning === "moderado" || conditioning === "ativo";
+
+    // PERDER PESO - Foco em cardio, alta intensidade, descanso curto
     if (answers.mainObjective === "perder_peso") {
-      exercises = [
-        { name: "Burpees", sets: "3", reps: "10-15", rest: "45s" },
-        { name: "Mountain Climbers", sets: "3", reps: "20-30", rest: "45s" },
-        { name: "Agachamento com salto", sets: "3", reps: "12-15", rest: "60s" },
-        { name: "Prancha", sets: "3", reps: "30-45s", rest: "45s" },
-        { name: "Polichinelos", sets: "3", reps: "30-40", rest: "30s" },
-      ];
-    } else if (answers.mainObjective === "ganhar_massa") {
-      exercises = [
-        { name: "Supino reto", sets: "4", reps: "8-12", rest: "90s" },
-        { name: "Agachamento livre", sets: "4", reps: "8-12", rest: "90s" },
-        { name: "Remada curvada", sets: "4", reps: "8-12", rest: "90s" },
-        { name: "Desenvolvimento militar", sets: "3", reps: "10-12", rest: "75s" },
-        { name: "Rosca direta", sets: "3", reps: "10-12", rest: "60s" },
-      ];
-    } else if (answers.mainObjective === "definicao") {
-      exercises = [
-        { name: "Flexão de braço", sets: "3", reps: "12-15", rest: "60s" },
-        { name: "Agachamento", sets: "3", reps: "15-20", rest: "60s" },
-        { name: "Prancha lateral", sets: "3", reps: "30s cada", rest: "45s" },
-        { name: "Afundo", sets: "3", reps: "12-15 cada", rest: "60s" },
-        { name: "Abdominal bicicleta", sets: "3", reps: "20-25", rest: "45s" },
-      ];
-    } else {
-      exercises = [
-        { name: "Caminhada rápida", sets: "1", reps: "20-30min", rest: "-" },
-        { name: "Agachamento", sets: "3", reps: "10-15", rest: "60s" },
-        { name: "Flexão (joelhos se necessário)", sets: "3", reps: "8-12", rest: "60s" },
-        { name: "Prancha", sets: "3", reps: "20-30s", rest: "45s" },
-        { name: "Alongamento completo", sets: "1", reps: "10min", rest: "-" },
-      ];
+      if (needsCare || conditioning === "sedentario") {
+        // Versão adaptada para iniciantes/limitações
+        exercises = [
+          { name: "Caminhada rápida ou polichinelos leves", sets: "3", reps: "2-3 min", rest: "60s" },
+          { name: "Agachamento sem peso", sets: "3", reps: "12-15", rest: "45s" },
+          { name: "Flexão de parede ou joelhos", sets: "3", reps: "8-12", rest: "45s" },
+          { name: "Prancha isométrica", sets: "3", reps: "20-30s", rest: "45s" },
+          { name: "Mountain Climbers moderado", sets: "3", reps: "15-20", rest: "60s" },
+        ];
+      } else if (answers.timeAvailable === "30min") {
+        // Versão curta e intensa
+        exercises = [
+          { name: "Burpees", sets: "4", reps: "10-12", rest: "30s" },
+          { name: "Agachamento com salto", sets: "4", reps: "12-15", rest: "30s" },
+          { name: "Mountain Climbers", sets: "4", reps: "25-30", rest: "30s" },
+          { name: "Jump Jacks", sets: "3", reps: "40-50", rest: "30s" },
+        ];
+      } else {
+        // Versão completa para intermediário/avançado
+        exercises = [
+          { name: "HIIT - Burpees", sets: "4", reps: "12-15", rest: "45s" },
+          { name: "Agachamento com salto", sets: "4", reps: "15-20", rest: "45s" },
+          { name: "Mountain Climbers", sets: "4", reps: "30-40", rest: "45s" },
+          { name: "Prancha alta com toque no ombro", sets: "3", reps: "20-24", rest: "45s" },
+          { name: "Jump Lunges (afundo com salto)", sets: "3", reps: "10-12 cada", rest: "60s" },
+          { name: "Polichinelos", sets: "3", reps: "40-60", rest: "30s" },
+        ];
+      }
     }
 
-    // Notas motivadoras
-    const motivationalNotes = [
-      `${answers.name}, você está no caminho certo! 💪`,
-      "Cada treino é um passo em direção ao seu objetivo",
-      "A consistência é mais importante que a perfeição",
-      "Seu corpo é capaz de coisas incríveis - acredite!",
-    ];
+    // GANHAR MASSA - Foco em peso, baixas reps, descanso longo
+    else if (answers.mainObjective === "ganhar_massa") {
+      if (needsCare || !isAdvanced) {
+        // Versão iniciante/cuidado
+        exercises = [
+          { name: "Agachamento livre ou goblet", sets: "3", reps: "10-12", rest: "90s" },
+          { name: "Flexão de braço (adaptada se necessário)", sets: "3", reps: "8-12", rest: "90s" },
+          { name: "Remada com halteres", sets: "3", reps: "10-12", rest: "75s" },
+          { name: "Desenvolvimento com halteres", sets: "3", reps: "10-12", rest: "75s" },
+          { name: "Rosca direta", sets: "3", reps: "10-12", rest: "60s" },
+        ];
+      } else if (answers.timeAvailable === "30min") {
+        // Versão curta focada em compostos
+        exercises = [
+          { name: "Agachamento livre (pesado)", sets: "4", reps: "6-8", rest: "120s" },
+          { name: "Supino reto", sets: "4", reps: "6-8", rest: "120s" },
+          { name: "Remada curvada", sets: "3", reps: "8-10", rest: "90s" },
+          { name: "Desenvolvimento militar", sets: "3", reps: "8-10", rest: "90s" },
+        ];
+      } else {
+        // Versão completa para hipertrofia
+        exercises = [
+          { name: "Agachamento livre", sets: "4", reps: "8-10", rest: "120s" },
+          { name: "Supino reto", sets: "4", reps: "8-10", rest: "120s" },
+          { name: "Levantamento terra", sets: "4", reps: "6-8", rest: "150s" },
+          { name: "Remada curvada", sets: "4", reps: "8-10", rest: "90s" },
+          { name: "Desenvolvimento militar", sets: "3", reps: "10-12", rest: "90s" },
+          { name: "Rosca direta", sets: "3", reps: "10-12", rest: "60s" },
+          { name: "Tríceps testa", sets: "3", reps: "10-12", rest: "60s" },
+        ];
+      }
+    }
 
-    // Dicas práticas
-    const practicalTips = [
-      "Aqueça sempre antes de começar (5-10 minutos)",
-      "Mantenha a postura correta em todos os exercícios",
-      "Beba água antes, durante e depois do treino",
-      "Respeite os dias de descanso - eles são essenciais",
-      "Aumente a intensidade gradualmente, sem pressa",
-    ];
+    // DEFINIÇÃO - Foco em volume, reps médias/altas, descanso médio
+    else if (answers.mainObjective === "definicao") {
+      if (needsCare || conditioning === "sedentario") {
+        // Versão adaptada
+        exercises = [
+          { name: "Agachamento sem peso", sets: "3", reps: "15-20", rest: "45s" },
+          { name: "Flexão de joelhos", sets: "3", reps: "12-15", rest: "45s" },
+          { name: "Prancha", sets: "3", reps: "30-40s", rest: "45s" },
+          { name: "Afundo alternado", sets: "3", reps: "12-15 cada", rest: "60s" },
+          { name: "Abdominal crunch", sets: "3", reps: "20-25", rest: "45s" },
+        ];
+      } else if (answers.timeAvailable === "30min") {
+        // Versão curta com superset
+        exercises = [
+          { name: "Flexão + Agachamento (superset)", sets: "4", reps: "12-15", rest: "45s" },
+          { name: "Prancha lateral", sets: "3", reps: "30-45s cada", rest: "45s" },
+          { name: "Afundo + Abdominal (superset)", sets: "3", reps: "15-20", rest: "60s" },
+          { name: "Mountain Climbers", sets: "3", reps: "25-30", rest: "45s" },
+        ];
+      } else {
+        // Versão completa com volume
+        exercises = [
+          { name: "Flexão de braço", sets: "4", reps: "12-15", rest: "60s" },
+          { name: "Agachamento", sets: "4", reps: "15-20", rest: "60s" },
+          { name: "Prancha lateral alternada", sets: "3", reps: "40s cada", rest: "45s" },
+          { name: "Afundo com salto", sets: "3", reps: "12-15 cada", rest: "60s" },
+          { name: "Abdominal bicicleta", sets: "3", reps: "25-30", rest: "45s" },
+          { name: "Polichinelos", sets: "3", reps: "40-50", rest: "45s" },
+        ];
+      }
+    }
+
+    // SAÚDE GERAL - Foco em funcional, mobilidade, baixo impacto
+    else {
+      if (needsCare || conditioning === "sedentario") {
+        // Versão muito adaptada
+        exercises = [
+          { name: "Caminhada leve", sets: "1", reps: "15-20 min", rest: "-" },
+          { name: "Agachamento na cadeira (sentar e levantar)", sets: "3", reps: "10-12", rest: "60s" },
+          { name: "Flexão de parede", sets: "3", reps: "10-15", rest: "60s" },
+          { name: "Prancha nos joelhos", sets: "3", reps: "20-30s", rest: "45s" },
+          { name: "Alongamento completo", sets: "1", reps: "10 min", rest: "-" },
+        ];
+      } else {
+        // Versão geral balanceada
+        exercises = [
+          { name: "Caminhada rápida ou trote leve", sets: "1", reps: "20-30 min", rest: "-" },
+          { name: "Agachamento", sets: "3", reps: "12-15", rest: "60s" },
+          { name: "Flexão (adaptada conforme nível)", sets: "3", reps: "10-15", rest: "60s" },
+          { name: "Prancha", sets: "3", reps: "30-45s", rest: "45s" },
+          { name: "Ponte de glúteos", sets: "3", reps: "15-20", rest: "45s" },
+          { name: "Alongamento e mobilidade", sets: "1", reps: "10 min", rest: "-" },
+        ];
+      }
+    }
+
+    // 5. NOTAS MOTIVADORAS PERSONALIZADAS - Baseadas em motivação e objetivo
+    const motivationalNotes: string[] = [];
+
+    motivationalNotes.push(`${answers.name}, você está no caminho certo para alcançar seu objetivo! 💪`);
+
+    // Mensagem baseada na motivação
+    if (answers.mainMotivation === "aparencia") {
+      motivationalNotes.push("Cada treino te aproxima da melhor versão de você mesmo!");
+    } else if (answers.mainMotivation === "saude") {
+      motivationalNotes.push("Você está investindo no bem mais precioso: sua saúde!");
+    } else if (answers.mainMotivation === "forca") {
+      motivationalNotes.push("A força que você busca já existe dentro de você - só precisa ser despertada!");
+    } else if (answers.mainMotivation === "desafio") {
+      motivationalNotes.push("Você é capaz de superar qualquer desafio que aparecer no seu caminho!");
+    } else {
+      motivationalNotes.push("Treinar em grupo ou sozinho, o importante é dar o primeiro passo!");
+    }
+
+    // Mensagem baseada no objetivo
+    if (answers.mainObjective === "perder_peso") {
+      motivationalNotes.push("A perda de peso acontece com consistência e paciência - você vai conseguir!");
+    } else if (answers.mainObjective === "ganhar_massa") {
+      motivationalNotes.push("Músculo não cresce na academia, mas sim durante o descanso e com boa alimentação!");
+    } else if (answers.mainObjective === "definicao") {
+      motivationalNotes.push("Definição é resultado de treino + alimentação equilibrada. Você está no caminho certo!");
+    }
+
+    motivationalNotes.push("Lembre-se: a consistência sempre vence a intensidade!");
+
+    // 6. DICAS PRÁTICAS PERSONALIZADAS - Baseadas em respostas do quiz
+    const practicalTips: string[] = [];
+
+    // Dicas gerais
+    practicalTips.push("Aqueça sempre antes de começar (5-10 minutos de cardio leve)");
+
+    // Baseado em limitações
+    if (answers.physicalLimitations === "nenhuma") {
+      practicalTips.push("Sem limitações: aproveite para aumentar a intensidade progressivamente");
+    } else if (answers.physicalLimitations === "leve") {
+      practicalTips.push("Com limitações leves: escute seu corpo e adapte exercícios se sentir desconforto");
+    } else {
+      practicalTips.push("Com limitações: consulte um profissional antes de iniciar e evite movimentos bruscos");
+    }
+
+    // Baseado em hidratação
+    if (answers.hydration === "ruim" || answers.hydration === "regular") {
+      practicalTips.push("IMPORTANTE: Aumente sua hidratação! Beba pelo menos 2-3L de água por dia");
+    } else {
+      practicalTips.push("Mantenha a boa hidratação antes, durante e após o treino");
+    }
+
+    // Baseado em sono
+    if (answers.sleep === "ruim" || answers.sleep === "regular") {
+      practicalTips.push("Seu sono precisa melhorar! Tente dormir 7-8h por noite para melhor recuperação");
+    } else {
+      practicalTips.push("Continue priorizando seu sono - ele é fundamental para resultados");
+    }
+
+    // Baseado em alimentação
+    if (answers.nutrition === "ruim" || answers.nutrition === "regular") {
+      practicalTips.push("Nutrição é 70% do resultado! Priorize proteínas, vegetais e carboidratos de qualidade");
+    }
+
+    // Dica sobre progressão
+    practicalTips.push("Aumente cargas, repetições ou séries a cada 2-3 semanas (progressão gradual)");
+
+    // Dica sobre descanso
+    if (conditioning === "sedentario" || conditioning === "leve") {
+      practicalTips.push("Descanse entre os treinos! Seu corpo precisa de tempo para se adaptar");
+    } else {
+      practicalTips.push("Respeite os dias de descanso - overtraining atrapalha os resultados");
+    }
 
     return {
       trainingType,
@@ -468,28 +649,64 @@ export default function WorkoutAnalysisPage() {
               <div className="inline-flex items-center justify-center w-20 h-20 bg-[#00FF00]/10 rounded-full mb-6">
                 <Dumbbell className="w-10 h-10 text-[#00FF00]" />
               </div>
-              <h2 className="text-4xl font-bold mb-3">Seu Treino Base</h2>
-              <p className="text-white/60 text-lg">Treino 100% personalizado para você</p>
+              <h2 className="text-4xl font-bold mb-3">{workout?.trainingType}</h2>
+              <p className="text-white/60 text-lg">Treino Base Personalizado - Criado especialmente para você</p>
+            </div>
+
+            {/* Box de destaque - Treino Personalizado */}
+            <div className="bg-gradient-to-br from-[#00FF00]/10 to-[#00CC00]/5 border-2 border-[#00FF00]/30 rounded-2xl p-6 mb-8">
+              <div className="flex items-start gap-4">
+                <Sparkles className="w-8 h-8 text-[#00FF00] flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="text-xl font-bold mb-2 text-[#00FF00]">Treino Base Personalizado</h3>
+                  <p className="text-white/80 leading-relaxed">
+                    Este é seu <strong>treino base</strong> criado com base em: sua idade ({(() => {
+                      const answersStr = localStorage.getItem('quizAnswers');
+                      if (answersStr) {
+                        const answers = JSON.parse(answersStr);
+                        return answers.age;
+                      }
+                      return '';
+                    })()} anos), tempo disponível ({(() => {
+                      const answersStr = localStorage.getItem('quizAnswers');
+                      if (answersStr) {
+                        const answers = JSON.parse(answersStr);
+                        return answers.timeAvailable;
+                      }
+                      return '';
+                    })()}), seu nível atual de condicionamento, objetivo principal, limitações físicas e motivação.
+                    Não é genérico - foi feito especialmente para <strong>você</strong>!
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Informações do Treino */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-[#00FF00]/10 to-[#00CC00]/5 border border-[#00FF00]/20 rounded-2xl p-6 text-center">
-                <Target className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-                <h3 className="font-bold mb-2">Tipo de Treino</h3>
-                <p className="text-white/80 text-sm">{workout?.trainingType}</p>
-              </div>
-
-              <div className="bg-gradient-to-br from-[#00FF00]/10 to-[#00CC00]/5 border border-[#00FF00]/20 rounded-2xl p-6 text-center">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:border-[#00FF00]/30 transition-colors">
                 <Calendar className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-                <h3 className="font-bold mb-2">Frequência</h3>
+                <h3 className="font-bold mb-2">Frequência Recomendada</h3>
                 <p className="text-white/80 text-sm">{workout?.weeklyFrequency}</p>
               </div>
 
-              <div className="bg-gradient-to-br from-[#00FF00]/10 to-[#00CC00]/5 border border-[#00FF00]/20 rounded-2xl p-6 text-center">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:border-[#00FF00]/30 transition-colors">
                 <TrendingUp className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-                <h3 className="font-bold mb-2">Divisão</h3>
+                <h3 className="font-bold mb-2">Divisão do Treino</h3>
                 <p className="text-white/80 text-sm">{workout?.trainingDivision}</p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:border-[#00FF00]/30 transition-colors">
+                <Clock className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
+                <h3 className="font-bold mb-2">Duração por Sessão</h3>
+                <p className="text-white/80 text-sm">{(() => {
+                  const answersStr = localStorage.getItem('quizAnswers');
+                  if (answersStr) {
+                    const answers = JSON.parse(answersStr);
+                    return answers.timeAvailable === "30min" ? "30 minutos" :
+                           answers.timeAvailable === "45-60min" ? "45-60 minutos" : "Mais de 60 minutos";
+                  }
+                  return 'Variável';
+                })()}</p>
               </div>
             </div>
 
