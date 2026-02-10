@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dumbbell, Check, Sparkles, TrendingUp, Calendar, Bell, Zap, Crown } from "lucide-react";
 
 export default function PremiumPage() {
-  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
-  const [loading, setLoading] = useState(false);
 
   const handleSubscribe = (plan: 'monthly' | 'annual') => {
     const paymentLinks = {

@@ -3,35 +3,31 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, User, Settings, LogOut, Crown, Calendar, TrendingUp, Target } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user: authUser, profile, loading: authLoading, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simular verificação de usuário premium
-    const isPremium = localStorage.getItem('isPremium');
-    if (!isPremium) {
+    if (authLoading) return;
+
+    if (!authUser || !profile) {
+      router.push('/auth');
+      return;
+    }
+
+    if (!profile.is_premium) {
       router.push('/premium');
       return;
     }
 
-    // Simular dados do usuário
-    setUser({
-      name: "João Silva",
-      email: "joao@email.com",
-      plan: "Premium Anual",
-      workoutsCompleted: 24,
-      currentStreak: 7,
-      nextWorkout: "Treino A - Peito e Tríceps"
-    });
-
     setLoading(false);
-  }, [router]);
+  }, [authUser, profile, authLoading, router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isPremium');
+  const handleLogout = async () => {
+    await signOut();
     router.push('/');
   };
 
@@ -85,7 +81,7 @@ export default function DashboardPage() {
           {/* Welcome */}
           <div className="text-center">
             <h2 className="text-4xl font-bold mb-2">
-              Bem-vindo de volta, {user?.name}! 💪
+              Bem-vindo de volta, {profile?.name || authUser?.email}! 💪
             </h2>
             <p className="text-xl text-white/80">
               Seu progresso está incrível. Vamos continuar!
@@ -96,13 +92,13 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
               <Target className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-              <div className="text-2xl font-bold mb-1">{user?.workoutsCompleted}</div>
+              <div className="text-2xl font-bold mb-1">0</div>
               <div className="text-white/60 text-sm">Treinos Completados</div>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
               <TrendingUp className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-              <div className="text-2xl font-bold mb-1">{user?.currentStreak}</div>
+              <div className="text-2xl font-bold mb-1">1</div>
               <div className="text-white/60 text-sm">Dias de Sequência</div>
             </div>
 
@@ -114,7 +110,9 @@ export default function DashboardPage() {
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
               <Crown className="w-8 h-8 text-[#00FF00] mx-auto mb-3" />
-              <div className="text-lg font-bold mb-1">{user?.plan}</div>
+              <div className="text-lg font-bold mb-1">
+                {profile?.premium_plan === 'annual' ? 'Premium Anual' : 'Premium Mensal'}
+              </div>
               <div className="text-white/60 text-sm">Plano Ativo</div>
             </div>
           </div>
@@ -127,7 +125,7 @@ export default function DashboardPage() {
             </h3>
 
             <div className="bg-white/5 rounded-xl p-6">
-              <h4 className="text-xl font-bold mb-4">{user?.nextWorkout}</h4>
+              <h4 className="text-xl font-bold mb-4">Treino A - Peito e Tríceps</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
                   <p className="text-white/60 text-sm">Duração Estimada</p>

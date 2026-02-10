@@ -3,30 +3,41 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, Sparkles, TrendingUp, Target, Crown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function HomePage() {
   const router = useRouter();
+  const { user, profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar se usuário já fez o quiz
-    const quizCompleted = localStorage.getItem('quizAnswers');
-    const isPremium = localStorage.getItem('isPremium');
+    if (authLoading) return;
 
-    if (isPremium === 'true') {
-      // Usuário Premium vai direto para o dashboard
-      router.push('/dashboard');
-    } else if (quizCompleted) {
-      // Usuário que já fez quiz mas não é Premium vai para página Premium
-      router.push('/premium');
+    if (user && profile) {
+      // Usuário autenticado
+      if (profile.is_premium) {
+        // Premium vai para dashboard
+        router.push('/dashboard');
+      } else if (profile.quiz_completed) {
+        // Fez quiz mas não é Premium
+        router.push('/premium');
+      } else {
+        // Autenticado mas não fez quiz
+        router.push('/start-quiz');
+      }
     } else {
-      // Usuário novo - mostrar landing page
+      // Usuário não autenticado - mostrar landing
       setLoading(false);
     }
-  }, [router]);
+  }, [user, profile, authLoading, router]);
 
   const handleStartQuiz = () => {
-    router.push('/start-quiz');
+    // Se não está autenticado, vai para página de login/registro
+    if (!user) {
+      router.push('/auth');
+    } else {
+      router.push('/start-quiz');
+    }
   };
 
   if (loading) {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, ArrowLeft, ArrowRight, Check, User, Calendar, Clock, AlertTriangle, TrendingUp, Target, Utensils, Droplets, Moon, Flame } from "lucide-react";
 import { supabase } from "@/utils/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QuizAnswers {
   name: string;
@@ -21,6 +22,7 @@ interface QuizAnswers {
 
 export default function FitPrimePage() {
   const router = useRouter();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [answers, setAnswers] = useState<QuizAnswers>({
@@ -38,6 +40,17 @@ export default function FitPrimePage() {
   });
 
   const totalSteps = 11;
+
+  useEffect(() => {
+    // Redirecionar se não estiver autenticado
+    if (!authLoading && !user) {
+      router.push('/auth');
+    }
+    // Se já completou o quiz, redirecionar
+    if (profile?.quiz_completed) {
+      router.push('/premium');
+    }
+  }, [user, profile, authLoading, router]);
 
   const handleNext = () => {
     if (step < totalSteps) {
@@ -75,12 +88,29 @@ export default function FitPrimePage() {
 
       if (error) {
         console.error('Erro ao salvar no Supabase:', error);
-        // Fallback para localStorage se Supabase falhar
-        localStorage.setItem('quizAnswers', JSON.stringify(answers));
-      } else {
-        // Salvar localmente também para acesso rápido
-        localStorage.setItem('quizAnswers', JSON.stringify(answers));
       }
+
+      // Marcar quiz_completed no perfil do usuário
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({
+            quiz_completed: true,
+            quiz_completed_at: new Date().toISOString(),
+            name: answers.name, // Atualizar nome do perfil
+          })
+          .eq('id', user.id);
+
+        if (profileError) {
+          console.error('Erro ao atualizar perfil:', profileError);
+        } else {
+          // Atualizar contexto
+          await refreshProfile();
+        }
+      }
+
+      // Salvar localmente para acesso rápido
+      localStorage.setItem('quizAnswers', JSON.stringify(answers));
 
       // Redirecionar para análise e geração do treino
       router.push("/workout-analysis");
