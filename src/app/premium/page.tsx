@@ -225,7 +225,7 @@ export default function PremiumPage() {
             </div>
             <p className="text-xl font-semibold mb-2">Mais de 10.000 usuários transformados</p>
             <p className="text-white/60">
-              "O FitPrime mudou minha vida! Perdi 15kg em 3 meses e nunca me senti tão bem."
+              "              &ldquo;O FitPrime mudou minha vida! Perdi 15kg em 3 meses e nunca me senti tão bem.&rdquo;"
             </p>
             <p className="text-white/80 font-semibold mt-2">- Maria Silva, São Paulo</p>
           </div>
