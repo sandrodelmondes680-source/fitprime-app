@@ -1,12 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Dumbbell, Check, Sparkles, TrendingUp, Calendar, Bell, Zap, Crown } from "lucide-react";
+import { Dumbbell, Check, Sparkles, TrendingUp, Calendar, Bell, Zap, Crown, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function PremiumPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSubscribe = (plan: 'monthly' | 'annual') => {
+    // Verificar se o usuário está autenticado
+    if (!user) {
+      // Se não estiver autenticado, mostrar modal de login
+      setShowLoginModal(true);
+      return;
+    }
+
+    // Se estiver autenticado, abrir link de pagamento
     const paymentLinks = {
       monthly: 'https://pay.kiwify.com.br/ZZ6yQv0',
       annual: 'https://pay.kiwify.com.br/Igb3YqS'
@@ -260,6 +273,56 @@ export default function PremiumPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal de Login */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1A1A1A] border border-[#00FF00]/20 rounded-2xl max-w-md w-full p-8 relative animate-in fade-in duration-300">
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#00FF00]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Crown className="w-8 h-8 text-[#00FF00]" />
+              </div>
+              <h3 className="text-2xl font-bold mb-2">Faça Login ou Cadastre-se</h3>
+              <p className="text-white/60">
+                Para assinar o plano Premium e desbloquear todos os recursos, você precisa criar uma conta ou fazer login.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  router.push('/auth/login');
+                }}
+                className="w-full bg-[#00FF00] text-[#0D0D0D] font-bold py-3 px-6 rounded-xl hover:scale-105 transition-all duration-300"
+              >
+                Fazer Login
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  router.push('/auth/signup');
+                }}
+                className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 px-6 rounded-xl hover:bg-white/10 transition-all duration-300"
+              >
+                Criar Conta Grátis
+              </button>
+            </div>
+
+            <p className="text-center text-white/50 text-sm mt-6">
+              Leva apenas 30 segundos para criar sua conta
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

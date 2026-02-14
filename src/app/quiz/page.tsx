@@ -52,10 +52,10 @@ export default function QuizPage() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setLoading(true);
     try {
-      // Armazenar respostas localmente
+      // Armazenar respostas localmente (não precisa de autenticação)
       localStorage.setItem('quizAnswers', JSON.stringify(answers));
 
       // Redirecionar para análise e geração do treino

@@ -23,7 +23,7 @@ export default function HomePage() {
         router.push('/premium');
       } else {
         // Autenticado mas não fez quiz
-        router.push('/start-quiz');
+        router.push('/quiz');
       }
     } else {
       // Usuário não autenticado - mostrar landing
@@ -32,12 +32,8 @@ export default function HomePage() {
   }, [user, profile, authLoading, router]);
 
   const handleStartQuiz = () => {
-    // Se não está autenticado, vai para página de login/registro
-    if (!user) {
-      router.push('/auth');
-    } else {
-      router.push('/start-quiz');
-    }
+    // Agora vai direto para o quiz sem exigir autenticação
+    router.push('/quiz');
   };
 
   if (loading) {
