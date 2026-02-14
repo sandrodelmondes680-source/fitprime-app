@@ -16,16 +16,19 @@ export async function signUp(email: string, password: string, fullName: string) 
   // Criar perfil do usuário (usando upsert para evitar duplicatas)
   if (data.user) {
     const { error: profileError } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .upsert({
         id: data.user.id,
         email: data.user.email,
-        full_name: fullName,
+        name: fullName,
       }, {
         onConflict: 'id'
       });
 
-    if (profileError) console.error('Erro ao criar perfil:', profileError);
+    if (profileError) {
+      console.error('Erro ao criar perfil:', profileError);
+      throw new Error(`Falha ao criar perfil: ${profileError.message}`);
+    }
   }
 
   return data;
@@ -78,7 +81,7 @@ export async function getCurrentUser() {
 
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .select('*')
     .eq('id', userId)
     .single();
@@ -89,7 +92,7 @@ export async function getProfile(userId: string) {
 
 export async function updateProfile(userId: string, updates: any) {
   const { data, error } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', userId)
     .select()
