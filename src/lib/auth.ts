@@ -7,29 +7,15 @@ export async function signUp(email: string, password: string, fullName: string) 
     options: {
       data: {
         full_name: fullName,
+        name: fullName, // Também adiciona 'name' para garantir
       },
     },
   });
 
   if (error) throw error;
 
-  // Criar perfil do usuário (usando upsert para evitar duplicatas)
-  if (data.user) {
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .upsert({
-        id: data.user.id,
-        email: data.user.email,
-        name: fullName,
-      }, {
-        onConflict: 'id'
-      });
-
-    if (profileError) {
-      console.error('Erro ao criar perfil:', profileError);
-      throw new Error(`Falha ao criar perfil: ${profileError.message}`);
-    }
-  }
+  // O perfil é criado automaticamente pelo trigger 'on_auth_user_created'
+  // no banco de dados, então não precisamos criar manualmente aqui
 
   return data;
 }
