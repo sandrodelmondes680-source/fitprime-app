@@ -1,16 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dumbbell, Check, Sparkles, TrendingUp, Calendar, Bell, Zap, Crown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { isPremiumActive } from "@/utils/premium-validator";
 
 export default function PremiumPage() {
+  const router = useRouter();
+  const { profile, loading } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
+
+  // Redirecionar se já tiver Premium ativo
+  useEffect(() => {
+    if (!loading && profile && isPremiumActive(profile)) {
+      router.push('/dashboard');
+    }
+  }, [loading, profile, router]);
 
   const handleSubscribe = (plan: 'monthly' | 'annual') => {
     const paymentLinks = {
       monthly: 'https://pay.kiwify.com.br/ZZ6yQv0',
       annual: 'https://pay.kiwify.com.br/Igb3YqS'
     };
+
+    // IMPORTANTE: Configure na Kiwify a URL de retorno como:
+    // https://seu-dominio.com/payment-success
+    // Isso permite que o usuário veja a tela de "Aguardando confirmação"
+    // enquanto o webhook processa o pagamento
 
     window.location.href = paymentLinks[plan];
   };
