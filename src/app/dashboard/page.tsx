@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dumbbell, User, Settings, LogOut, Crown, Calendar, TrendingUp, Target } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { isPremiumActive } from "@/utils/premium-validator";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,7 +19,8 @@ export default function DashboardPage() {
       return;
     }
 
-    if (!profile.is_premium) {
+    // ✅ VALIDAÇÃO COMPLETA: Verifica is_premium E premium_expires_at
+    if (!isPremiumActive(profile)) {
       router.push('/premium');
       return;
     }
